@@ -84,6 +84,7 @@ function processData(req, res) {
 
   req.on('end', function() {
     var state, i, x, j, data;
+
     state = querystring.parse(body);
 
     // update storage w/ new data
@@ -110,6 +111,7 @@ function processData(req, res) {
     else {
       storage.status='complete';
     }
+
     emitResponse(res, 200, JSON.stringify(storage),"application/json");
   });
 }

@@ -76,8 +76,29 @@ function emitData(res) {
 }
 
 function processData(req, res) {
+  var body = '';
 
+  req.on('data', function(chunk) {
+    body += chunk.toString();
+  });
+
+  req.on('end', function() {
+    var state, i, x;
+    state = querystring.parse(body);
+
+    // update storage w/ data points
+    for(i=0,x=storage.data.length;i<x;i++) {
+      try {
+        storage.data[i].value=state[storage.data[i].name].value;
+      }
+      catch (ex) {}
+    }
+    // update the "status" of the storage (pending,complete)
+    // based on update, send only the columns that are still empty
+    emitResponse(res, 200, JSON.stringify(storage),"application/json");
+  });
 }
+
 function emitResponse(res, status, text, type) {
   res.writeHead(status, {'content-type':type});
   res.end(text);

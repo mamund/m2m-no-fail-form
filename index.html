@@ -1,8 +1,131 @@
 <html>
   <head>
     <title>m2m-no-fail-form</title>
+    <style>
+      p {margin:0;}
+      legend {font-weight:bold;}
+      span {display:block;width:65px;float:left;}
+      form {width: 400px; padding:.5em; border: 1px solid black;}
+    </style>
   </head>
   <body>
     <h1>m2m-no-fail-form</h1>
+    <div id="actions"></div>
   </body>
+  <script>
+    window.onload = function() {
+      var pg = thisPage();
+      pg.init();
+    };
+
+
+    var thisPage = function() {
+
+      var g = {};
+      g.url = '/data';
+      g.response = {};
+
+      g.currentState = '';
+      g.targetState = 'complete';
+
+      g.myData = {};
+      g.myData.firstname='mike';
+      g.myData.lastname='amundsen';
+      g.myData.email='mamund@yahoo.com';
+
+      function init() {
+        makeRequest(g.url);
+      }
+
+      function displayState() {
+        var elm, data, i, x, frm, lgd, j, y, p, spn, inp, btn;
+
+        elm = document.getElementById('actions');
+        if(elm) {
+          elm.innerHTML = '';
+          for(i=0,x=g.response.actions.length;i<x;i++) {
+            frm = document.createElement('form');
+            frm.href = g.response.actions[i].href;
+            frm.name = g.response.actions[i].name
+            lgd = document.createElement('legend');
+            lgd.appendChild(document.createTextNode(g.response.actions[i].name + '=' + g.response.status));
+            frm.appendChild(lgd);
+
+            data = g.response.actions[i].data;
+            for(j=0,y=data.length;j<y;j++) {
+              spn = document.createElement('span');
+              spn.appendChild(document.createTextNode(data[j].name));
+
+              inp = document.createElement('input');
+              inp.type='text';
+              inp.name = data[j].name;
+              inp.value = data[j].value;
+
+              p = document.createElement('p');
+              p.appendChild(spn);
+              p.appendChild(inp);
+              frm.appendChild(p);
+            }
+
+            btn = document.createElement('button');
+            btn.appendChild(document.createTextNode('send'));
+            btn.onclick = function(){sendData(frm);return false;};
+            frm.appendChild(btn);
+            elm.appendChild(frm);
+          }
+        }
+      }
+
+      function sendData(frm) {
+        var coll, i, x, data;
+
+        data = '';
+        coll = document.getElementsByTagName('input');
+        for(i=0,x=coll.length;i<x;i++) {
+          if(i!==0) {
+            data +='&';
+          }
+          data += coll[i].name+'='+escape(coll[i].value);
+        }
+        makeRequest(frm.href,data);
+      }
+      function makeRequest(href, body) {
+        var ajax;
+
+        ajax=new XMLHttpRequest();
+        if(ajax) {
+
+          ajax.onreadystatechange = function(){processResponse(ajax);};
+
+          if(body) {
+            ajax.open('put',href,false);
+            ajax.setRequestHeader("content-type","application/x-www-form-urlencoded");
+            ajax.send(body);
+          }
+          else {
+            ajax.open('get',href,false);
+            ajax.setRequestHeader("accept","application/json");
+            ajax.send(null);
+          }
+        }
+      }
+
+      function processResponse(ajax) {
+
+        if(ajax.readyState==4 || ajax.readyState==='complete') {
+          if(ajax.status===200 || ajax.status===204) {
+            g.response = JSON.parse(ajax.responseText);
+            displayState();
+          }
+          else {
+            alert('*** ERROR: '+ajax.status+'\n'+ajax.statusText);
+          }
+        }
+      }
+
+      var that = {};
+      that.init = init;
+      return that;
+    }
+  </script>
 </html>

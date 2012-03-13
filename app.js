@@ -3,6 +3,14 @@
 var fs = require('fs');
 var http = require('http');
 var querystring = require('querystring');
+var util = require('util');
+
+var messageColor = '\033[36m';
+var bodyColor = '\033[32m';
+var lineColor = '\033[37m';
+var resetColor = '\033[0m';
+
+var log = (process.argv.length > 2 && process.argv[2] == 'log');
 
 // in-memory storage (since this is just an experiment<g>)
 var storage = {};
@@ -73,6 +81,11 @@ function sendFile(err, file, res) {
 
 function emitData(res) {
   emitResponse(res, 200, JSON.stringify(storage), "application/json");
+
+  if (log) {
+    console.log(messageColor + "response body:\r\n", bodyColor + util.inspect(storage,false,null));
+    console.log(lineColor + "================================================" + resetColor);
+  }
 }
 
 function processData(req, res) {
@@ -86,6 +99,8 @@ function processData(req, res) {
     var state, i, x, j, data;
 
     state = querystring.parse(body);
+    if (log)
+      console.log(messageColor + "request body:", bodyColor + body);
 
     // update storage w/ new data
     for(i=0,x=storage.data.length;i<x;i++) {
@@ -112,7 +127,8 @@ function processData(req, res) {
       storage.status='complete';
     }
 
-    emitResponse(res, 200, JSON.stringify(storage),"application/json");
+    emitData(res);
+    //emitResponse(res, 200, JSON.stringify(storage),"application/json");
   });
 }
 

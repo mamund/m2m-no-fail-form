@@ -83,18 +83,33 @@ function processData(req, res) {
   });
 
   req.on('end', function() {
-    var state, i, x;
+    var state, i, x, j, data;
     state = querystring.parse(body);
 
-    // update storage w/ data points
+    // update storage w/ new data
     for(i=0,x=storage.data.length;i<x;i++) {
-      try {
-        storage.data[i].value=state[storage.data[i].name].value;
+      if(state[storage.data[i].name]) {
+        storage.data[i].value=state[storage.data[i].name];
       }
-      catch (ex) {}
     }
+
+    // add any inputs still empty
+    j=0;
+    data = [];
+    for(i=0,x=storage.data.length;i<x;i++) {
+      if(storage.data[i].value==='') {
+        data[j++] = {name:storage.data[i].name, value:''};
+      }
+    }
+    storage.actions[0].data=data;
+
     // update the "status" of the storage (pending,complete)
-    // based on update, send only the columns that are still empty
+    if(j>0) {
+      storage.status='pending';
+    }
+    else {
+      storage.status='complete';
+    }
     emitResponse(res, 200, JSON.stringify(storage),"application/json");
   });
 }

@@ -4,12 +4,15 @@
     <style>
       p {margin:0;}
       legend {font-weight:bold;}
-      span {display:block;width:65px;float:left;}
+      span {display:block;width:100px;float:left;}
       form {width: 400px; padding:.5em; border: 1px solid black;}
     </style>
   </head>
   <body>
     <h1>m2m-no-fail-form</h1>
+    <h3>storage</h3>
+    <div id="storage"></div>
+    <h3>actions</h3>
     <div id="actions"></div>
   </body>
   <script>
@@ -17,7 +20,6 @@
       var pg = thisPage();
       pg.init();
     };
-
 
     var thisPage = function() {
 
@@ -28,17 +30,56 @@
       g.currentState = '';
       g.targetState = 'complete';
 
+      g.bot=true;
+      g.botPause=1000;
+
+      // dictionary for inputs
       g.myData = {};
       g.myData.firstname='mike';
       g.myData.lastname='amundsen';
       g.myData.email='mamund@yahoo.com';
+      g.myData.cellphone='1.234.567.8901';
+      g.myData.website='http://amundsen.com';
 
       function init() {
         makeRequest(g.url);
       }
 
       function displayState() {
-        var elm, data, i, x, frm, lgd, j, y, p, spn, inp, btn;
+
+        displayStorage();
+        displayInputs();
+
+        // decide what to do now
+        g.currentState = g.response.status;
+        if(g.currentState===g.targetState) {
+          if(g.bot===true) {
+            alert('state='+g.targetState+'\nall done!');
+          }
+        }
+        else {
+          // do the work
+          if(g.bot===true) {
+            setTimeout(updateInput,g.botPause);
+          }
+        }
+      }
+
+      function displayStorage() {
+        var elm, i, x, stor;
+
+        elm = document.getElementById('storage');
+        if(elm) {
+          stor = '';
+          for(i=0,x=g.response.data.length;i<x;i++) {
+            stor += g.response.data[i].name+'='+g.response.data[i].value+'<br />'
+          }
+          elm.innerHTML = stor;
+        }
+      }
+
+      function displayInputs() {
+        var elm, i, x, j, y, frm, lgd, data, spn, inp, p, btn;
 
         elm = document.getElementById('actions');
         if(elm) {
@@ -67,12 +108,28 @@
               frm.appendChild(p);
             }
 
-            btn = document.createElement('button');
-            btn.appendChild(document.createTextNode('send'));
-            btn.onclick = function(){sendData(frm);return false;};
-            frm.appendChild(btn);
-            elm.appendChild(frm);
+            if(j>0) {
+              btn = document.createElement('button');
+              btn.appendChild(document.createTextNode('send'));
+              btn.onclick = function(){sendData(frm);return false;};
+              frm.appendChild(btn);
+              elm.appendChild(frm);
+            }
           }
+        }
+      }
+
+      function updateInput() {
+        var elm, frm;
+
+        frm = document.getElementsByTagName('form')[0];
+        elm = document.getElementsByTagName('input')[0];
+        if(elm) {
+          try {
+            elm.value = g.myData[elm.name];
+            sendData(frm);
+          }
+          catch (ex){}
         }
       }
 
@@ -89,6 +146,7 @@
         }
         makeRequest(frm.href,data);
       }
+
       function makeRequest(href, body) {
         var ajax;
 
